@@ -1,3 +1,4 @@
+import DownloadPdfButton from "@/components/DownloadPdfButton";
 import type { ContentBrief } from "@/lib/types";
 
 function Section({
@@ -20,8 +21,9 @@ function Section({
 export default function BriefOutput({ brief }: { brief: ContentBrief }) {
   return (
     <div className="w-full max-w-3xl rounded-lg border border-black/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-black/20 sm:p-8">
-      <div className="mb-2 flex items-center justify-between gap-4">
+      <div className="mb-2 flex items-start justify-between gap-4">
         <h1 className="text-2xl font-bold">Content Brief: {brief.topic}</h1>
+        <DownloadPdfButton brief={brief} />
       </div>
       {brief.groundingNotes.length > 0 ? (
         <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
@@ -83,7 +85,7 @@ export default function BriefOutput({ brief }: { brief: ContentBrief }) {
 
       <Section title="Word count target">
         <p className="mb-2">
-          <span className="font-medium">Total:</span> ~{brief.wordCount.total.toLocaleString()} words
+          <span className="font-medium">Total:</span> ~{brief.wordCount.total.toLocaleString("en-US")} words
         </p>
         <ul className="list-inside list-disc space-y-1">
           {brief.wordCount.sections.map((s) => (
