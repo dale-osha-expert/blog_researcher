@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const SEMRUSH_BUDGET_MS = 10000;
-const NEURONWRITER_BUDGET_MS = 25000;
+const NEURONWRITER_BUDGET_MS = 12000;
 const MODEL = "claude-sonnet-5";
 const MAX_OUTPUT_TOKENS = 16000;
 

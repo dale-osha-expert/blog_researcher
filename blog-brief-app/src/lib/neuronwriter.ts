@@ -1,6 +1,6 @@
 const API_BASE = "https://app.neuronwriter.com/neuron-api/0.5/writer";
-const REQUEST_TIMEOUT_MS = 15000;
-const POLL_ATTEMPTS = 3;
+const REQUEST_TIMEOUT_MS = 8000;
+const POLL_ATTEMPTS = 1;
 const POLL_INTERVAL_MS = 3000;
 
 export interface NeuronWriterResult {
@@ -49,12 +49,13 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 /**
- * NeuronWriter's own analysis run can take well over a minute in practice.
- * This polls for a bounded window (~POLL_ATTEMPTS * POLL_INTERVAL_MS) so a
- * single request doesn't hang indefinitely; if it's not ready in that window
- * we report "processing" rather than blocking or fabricating term data.
- * Field names (status, metrics.word_count.target, terms.content_basic[].t)
- * are verified against a live account's get-query response.
+ * NeuronWriter's analysis takes ~2 minutes, so waiting on a freshly started
+ * one would only burn the request's time budget without ever succeeding.
+ * Instead this checks once: a previously started analysis for the keyword is
+ * picked up if it's ready, otherwise we kick one off and report "processing"
+ * so the next generate collects it. Field names (status,
+ * metrics.word_count.target, terms.content_basic[].t) are verified against a
+ * live account's get-query response.
  */
 export async function fetchNeuronWriterTermCoverage(keyword: string, apiKey: string): Promise<NeuronWriterResult> {
   try {
