@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -38,8 +38,12 @@ export async function fetchSourceText(url: string): Promise<FetchedSource> {
       signal: controller.signal,
       redirect: "follow",
       headers: {
-        "User-Agent": "content-brief-generator/1.0 (+source grounding fetch)",
-        Accept: "text/html,application/xhtml+xml,application/pdf",
+        // Many public sites (osha.gov among them) reject unrecognized agents
+        // with a 403, which would silently strip grounding from every brief.
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
       },
     });
 
@@ -59,8 +63,8 @@ export async function fetchSourceText(url: string): Promise<FetchedSource> {
     }
 
     const html = await response.text();
-    const dom = new JSDOM(html, { url: parsedUrl.toString() });
-    const article = new Readability(dom.window.document).parse();
+    const { document } = parseHTML(html);
+    const article = new Readability(document as unknown as Document).parse();
 
     if (!article?.textContent?.trim()) {
       return failure(url, "could not extract readable article content");
