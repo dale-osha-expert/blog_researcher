@@ -23,9 +23,16 @@ export default function BriefOutput({ brief }: { brief: ContentBrief }) {
       <div className="mb-2 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Content Brief: {brief.topic}</h1>
       </div>
-      <p className="mb-6 text-sm text-black/50 dark:text-white/50">
-        Placeholder output — real generation via the Claude API arrives in milestone 2.
-      </p>
+      {brief.groundingNotes.length > 0 ? (
+        <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+          <p className="mb-2 font-semibold uppercase tracking-wide">Data sources for this brief</p>
+          <ul className="list-inside list-disc space-y-1">
+            {brief.groundingNotes.map((note, i) => (
+              <li key={i}>{note}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <Section title="Summary / TL;DR">
         <p>{brief.summary}</p>
@@ -148,6 +155,24 @@ export default function BriefOutput({ brief }: { brief: ContentBrief }) {
         <ul className="list-inside list-disc space-y-1">
           {brief.distributionNotes.map((note, i) => (
             <li key={i}>{note}</li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="NotebookLM Research Kit">
+        <p className="mb-3 text-sm text-black/60 dark:text-white/60">
+          For deeper, cited verification before drafting — paste these into a NotebookLM notebook and ask it these questions.
+        </p>
+        <p className="mb-1 font-medium">Suggested sources to add</p>
+        <ul className="mb-3 list-inside list-disc space-y-1">
+          {brief.notebookLmResearchKit.suggestedSources.map((source, i) => (
+            <li key={i}>{source}</li>
+          ))}
+        </ul>
+        <p className="mb-1 font-medium">Suggested questions to ask</p>
+        <ul className="list-inside list-disc space-y-1">
+          {brief.notebookLmResearchKit.suggestedQuestions.map((question, i) => (
+            <li key={i}>{question}</li>
           ))}
         </ul>
       </Section>

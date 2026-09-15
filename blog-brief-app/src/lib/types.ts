@@ -3,6 +3,7 @@ export interface BriefRequest {
   audience?: string;
   domain?: string;
   competitorUrls?: string[];
+  sourceUrls?: string[];
 }
 
 export interface OutlineSection {
@@ -31,8 +32,19 @@ export interface InternalLinkSuggestion {
   note: string;
 }
 
+export interface NotebookLmResearchKit {
+  suggestedSources: string[];
+  suggestedQuestions: string[];
+}
+
 export interface ContentBrief {
   topic: string;
+  /**
+   * Server-generated notes about data-source availability/failures for this brief
+   * (e.g. "Semrush not configured", "source fetch failed for X"). Never written by the
+   * model — always attached by the API route from what actually happened.
+   */
+  groundingNotes: string[];
   summary: string;
   keywords: {
     primary: string;
@@ -62,4 +74,5 @@ export interface ContentBrief {
   };
   faqs: string[];
   distributionNotes: string[];
+  notebookLmResearchKit: NotebookLmResearchKit;
 }

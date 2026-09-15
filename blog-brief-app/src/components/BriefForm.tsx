@@ -13,6 +13,7 @@ export default function BriefForm({ onSubmit, isLoading }: BriefFormProps) {
   const [audience, setAudience] = useState("");
   const [domain, setDomain] = useState("");
   const [competitorUrls, setCompetitorUrls] = useState("");
+  const [sourceUrls, setSourceUrls] = useState("");
   const formId = useId();
 
   function handleSubmit(e: React.FormEvent) {
@@ -26,6 +27,10 @@ export default function BriefForm({ onSubmit, isLoading }: BriefFormProps) {
       domain: domain.trim() || undefined,
       competitorUrls: competitorUrls
         .split(",")
+        .map((url) => url.trim())
+        .filter(Boolean),
+      sourceUrls: sourceUrls
+        .split(/[,\n]/)
         .map((url) => url.trim())
         .filter(Boolean),
     });
@@ -94,6 +99,22 @@ export default function BriefForm({ onSubmit, isLoading }: BriefFormProps) {
               placeholder="e.g. https://a.com/post, https://b.com/post"
               className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 text-base outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/40"
             />
+          </div>
+          <div>
+            <label htmlFor={`${formId}-sources`} className="mb-1 block text-sm font-medium">
+              Source URLs to ground the brief in (comma or newline separated)
+            </label>
+            <textarea
+              id={`${formId}-sources`}
+              value={sourceUrls}
+              onChange={(e) => setSourceUrls(e.target.value)}
+              placeholder={"e.g. https://example.com/article\nhttps://example.com/study"}
+              rows={2}
+              className="w-full resize-y rounded-md border border-black/15 bg-transparent px-3 py-2 text-base outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/40"
+            />
+            <p className="mt-1 text-xs text-black/50 dark:text-white/50">
+              Fetched server-side and used as cited grounding facts. HTML pages only for now — PDF extraction is a later milestone.
+            </p>
           </div>
         </div>
       </details>

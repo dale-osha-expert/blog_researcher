@@ -3,22 +3,35 @@
 import { useState } from "react";
 import BriefForm from "@/components/BriefForm";
 import BriefOutput from "@/components/BriefOutput";
-import { generatePlaceholderBrief } from "@/lib/placeholder";
 import type { BriefRequest, ContentBrief } from "@/lib/types";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [brief, setBrief] = useState<ContentBrief | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(request: BriefRequest) {
     setIsLoading(true);
     setBrief(null);
+    setError(null);
 
-    // TODO(milestone 2): replace with a call to /api/brief backed by the Claude API.
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setBrief(generatePlaceholderBrief(request));
+    try {
+      const response = await fetch("/api/generate-brief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
 
-    setIsLoading(false);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || `Request failed with status ${response.status}`);
+      }
+      setBrief(data as ContentBrief);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong generating this brief.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -31,6 +44,12 @@ export default function Home() {
       </div>
 
       <BriefForm onSubmit={handleSubmit} isLoading={isLoading} />
+
+      {error ? (
+        <div className="w-full max-w-3xl rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          {error}
+        </div>
+      ) : null}
 
       {brief ? <BriefOutput brief={brief} /> : null}
     </main>
