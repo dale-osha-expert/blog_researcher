@@ -80,7 +80,7 @@ export function buildGrounding(inputs: GroundingInputs): { contextText: string; 
       const lines = ["SOURCE MATERIAL SUPPLIED BY THE USER (use as cited grounding facts where relevant):"];
       for (const s of sources) {
         if (s.text) {
-          lines.push(`--- ${s.url}${s.title ? ` ("${s.title}")` : ""} ---\n${s.text}`);
+          lines.push(`--- ${s.kind === "pdf" ? "[PDF] " : ""}${s.url}${s.title ? ` ("${s.title}")` : ""} ---\n${s.text}`);
         } else {
           lines.push(`--- ${s.url} — NOT usable: ${s.error} ---`);
         }

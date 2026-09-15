@@ -113,7 +113,7 @@ export default function BriefForm({ onSubmit, isLoading }: BriefFormProps) {
               className="w-full resize-y rounded-md border border-black/15 bg-transparent px-3 py-2 text-base outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/40"
             />
             <p className="mt-1 text-xs text-black/50 dark:text-white/50">
-              Fetched server-side and used as cited grounding facts. HTML pages only for now — PDF extraction is a later milestone.
+              Fetched server-side and used as cited grounding facts. Web pages and PDFs are both supported (scanned PDFs without a text layer can&apos;t be read).
             </p>
           </div>
         </div>
