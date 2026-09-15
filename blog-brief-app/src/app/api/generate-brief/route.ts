@@ -38,6 +38,16 @@ function parseRequestBody(body: unknown): BriefRequest | null {
 }
 
 export async function POST(request: Request) {
+  try {
+    return await generateBrief(request);
+  } catch (err) {
+    console.error("generate-brief failed:", err);
+    const message = err instanceof Error ? `${err.name}: ${err.message}` : "unknown server error";
+    return NextResponse.json({ error: `Brief generation failed — ${message}` }, { status: 500 });
+  }
+}
+
+async function generateBrief(request: Request) {
   let body: unknown;
   try {
     body = await request.json();
