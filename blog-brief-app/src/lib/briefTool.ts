@@ -18,6 +18,58 @@ export type ModelBriefOutput = {
   notebookLmResearchKit: NotebookLmResearchKit;
 };
 
+const REQUIRED_ARRAY_FIELDS = [
+  "titleOptions",
+  "outline",
+  "competitiveGaps",
+  "statsChecklist",
+  "visualSuggestions",
+  "faqs",
+  "distributionNotes",
+] as const;
+
+const REQUIRED_OBJECT_FIELDS = [
+  "keywords",
+  "searchIntent",
+  "wordCount",
+  "template",
+  "internalLinks",
+  "notebookLmResearchKit",
+] as const;
+
+/**
+ * The model's tool input is external data, not a guarantee — a truncated or
+ * malformed response must surface as a clear error rather than a TypeError
+ * deep in the response builder (which Next turns into an empty-body 500).
+ */
+export function validateModelBrief(input: unknown): { ok: true; value: ModelBriefOutput } | { ok: false; missing: string[] } {
+  const missing: string[] = [];
+  const record = input && typeof input === "object" ? (input as Record<string, unknown>) : null;
+  if (!record) {
+    return { ok: false, missing: ["entire brief object"] };
+  }
+
+  if (typeof record.summary !== "string" || !record.summary.trim()) missing.push("summary");
+  for (const field of REQUIRED_ARRAY_FIELDS) {
+    if (!Array.isArray(record[field])) missing.push(field);
+  }
+  for (const field of REQUIRED_OBJECT_FIELDS) {
+    if (!record[field] || typeof record[field] !== "object") missing.push(field);
+  }
+
+  if (missing.length === 0) {
+    const internalLinks = record.internalLinks as Record<string, unknown>;
+    if (!Array.isArray(internalLinks.suggestions)) missing.push("internalLinks.suggestions");
+    const kit = record.notebookLmResearchKit as Record<string, unknown>;
+    if (!Array.isArray(kit.suggestedSources)) missing.push("notebookLmResearchKit.suggestedSources");
+    if (!Array.isArray(kit.suggestedQuestions)) missing.push("notebookLmResearchKit.suggestedQuestions");
+    const wordCount = record.wordCount as Record<string, unknown>;
+    if (!Array.isArray(wordCount.sections)) missing.push("wordCount.sections");
+  }
+
+  return missing.length === 0 ? { ok: true, value: record as unknown as ModelBriefOutput } : { ok: false, missing };
+}
+
 export const BRIEF_TOOL: Anthropic.Tool = {
   name: "emit_content_brief",
   description: "Emit the complete structured content brief for the requested topic.",

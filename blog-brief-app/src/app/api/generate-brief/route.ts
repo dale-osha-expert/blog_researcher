@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { BRIEF_TOOL, SYSTEM_PROMPT, buildUserPrompt, type ModelBriefOutput } from "@/lib/briefTool";
+import { BRIEF_TOOL, SYSTEM_PROMPT, buildUserPrompt, validateModelBrief } from "@/lib/briefTool";
 import { buildGrounding } from "@/lib/groundingContext";
 import { fetchNeuronWriterTermCoverage, type NeuronWriterResult } from "@/lib/neuronwriter";
 import { fetchSemrushData, type SemrushResult } from "@/lib/semrush";
@@ -14,6 +14,7 @@ export const maxDuration = 60;
 const SEMRUSH_BUDGET_MS = 10000;
 const NEURONWRITER_BUDGET_MS = 25000;
 const MODEL = "claude-sonnet-5";
+const MAX_OUTPUT_TOKENS = 16000;
 
 function parseRequestBody(body: unknown): BriefRequest | null {
   if (!body || typeof body !== "object") return null;
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
   try {
     response = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 4096,
+      max_tokens: MAX_OUTPUT_TOKENS,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
       tools: [BRIEF_TOOL],
@@ -105,10 +106,26 @@ export async function POST(request: Request) {
 
   const toolUse = response.content.find((block): block is Anthropic.ToolUseBlock => block.type === "tool_use");
   if (!toolUse) {
-    return NextResponse.json({ error: "Claude did not return a structured brief." }, { status: 502 });
+    const reason =
+      response.stop_reason === "max_tokens"
+        ? "Claude hit the output token limit before it could return a brief. Try a narrower topic or fewer source URLs."
+        : "Claude did not return a structured brief.";
+    return NextResponse.json({ error: reason }, { status: 502 });
   }
 
-  const modelBrief = toolUse.input as ModelBriefOutput;
+  const validated = validateModelBrief(toolUse.input);
+  if (!validated.ok) {
+    const truncated = response.stop_reason === "max_tokens";
+    return NextResponse.json(
+      {
+        error: truncated
+          ? `The brief was cut off before it finished (missing: ${validated.missing.join(", ")}). Try a narrower topic or fewer source URLs.`
+          : `Claude returned an incomplete brief (missing: ${validated.missing.join(", ")}). Try generating again.`,
+      },
+      { status: 502 },
+    );
+  }
+  const modelBrief = validated.value;
 
   const brief: ContentBrief = {
     topic: briefRequest.topic,

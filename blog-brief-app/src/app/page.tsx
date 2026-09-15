@@ -22,9 +22,19 @@ export default function Home() {
         body: JSON.stringify(request),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || `Request failed with status ${response.status}`);
+      const raw = await response.text();
+      let data: { error?: string } | ContentBrief | null = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        throw new Error(
+          `The server returned an unreadable response (status ${response.status}). Check the server logs and try again.`,
+        );
+      }
+
+      if (!response.ok || !data) {
+        const message = data && "error" in data && data.error ? data.error : `Request failed with status ${response.status}`;
+        throw new Error(message);
       }
       setBrief(data as ContentBrief);
     } catch (err) {
