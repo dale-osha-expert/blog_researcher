@@ -49,7 +49,7 @@ export async function fetchSemrushData(keyword: string, apiKey: string): Promise
     });
     const raw = await response.text();
     if (!response.ok) {
-      return { metrics: null, error: `HTTP ${response.status} from Semrush: ${raw.slice(0, 300)}` };
+      return { metrics: null, error: describeHttpError(response.status, raw) };
     }
 
     let parsed: SemrushMetricsResponse;
@@ -86,5 +86,23 @@ export async function fetchSemrushData(keyword: string, apiKey: string): Promise
     return { metrics: null, error: message };
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+/**
+ * Semrush distinguishes an unrecognized credential (401) from a recognized one
+ * whose account lacks entitlement (403), so the message should point at the
+ * right fix rather than dumping the raw gateway JSON into the brief.
+ */
+function describeHttpError(status: number, raw: string): string {
+  switch (status) {
+    case 401:
+      return "Semrush did not recognize the API key (401) — check that SEMRUSH_API_KEY is set correctly.";
+    case 403:
+      return "Semrush accepted the key but denied access (403) — the account behind it does not have API access enabled for this endpoint. Semrush's REST API generally requires an API subscription on top of the plan.";
+    case 429:
+      return "Semrush rate-limited this request (429) — try again shortly.";
+    default:
+      return `HTTP ${status} from Semrush: ${raw.slice(0, 200)}`;
   }
 }
